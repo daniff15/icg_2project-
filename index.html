@@ -8,7 +8,6 @@
     <script type="text/javascript" src="libs/jquery-1.9.0.js"></script>
     <script type="text/javascript" src="libs/stats.js"></script>
     <script type="text/javascript" src="libs/dat.gui.js"></script>
-    <script type="text/javascript" src="libs/three.min.js"></script>
     <script type="text/javascript" src="libs/TrackballControls.js"></script>
     <script type="text/javascript" src="libs/ThreeCSG.js"></script>
     <style>
@@ -29,6 +28,7 @@
 
     <script type="text/javascript">
         $(function () {
+            // function to repeat textures in order to filled the object
             function createRepeatingTexture(fileName, repeatX, repeatY) {
                 var texture = THREE.ImageUtils.loadTexture(fileName);
                 texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
@@ -42,7 +42,7 @@
 
                 var groundGeometry = new THREE.PlaneGeometry(size, size);
 
-                var groundMaterial = new THREE.MeshLambertMaterial({
+                var groundMaterial = new THREE.MeshBasicMaterial({
                     map: createRepeatingTexture("assets/grass.jpg", 5, 5)
                 });
 
@@ -53,24 +53,133 @@
                 return ground;
             }
 
-            // function moveKnight(knight, stepIncr) {
-            //     if (knight.patrolStatus == "starting") {
-            //         knight.position.y -= stepIncr * 100;
 
-            //     } else {
-            //         knight.step += stepIncr;
+            //Function to create a general road
+            function createRoad(length, width, material) {
+                var road = new THREE.Mesh(new THREE.PlaneGeometry(length, width), material);
+                road.receiveShadow = true;
+                road.rotation.x = -0.5 * Math.PI;
+                road.position.y = 0.2;
 
-            //         knight.position.x = Math.sin(knight.step) * knight.patrolRadius;
-            //         knight.position.y = Math.cos(knight.step) * knight.patrolRadius;
+                return road;
+            }
 
-            //         if (knight.rowPos !== undefined) {
-            //             knight.position.x += knight.rowPos * 20;
-            //             knight.position.y -= knight.colPos * 20;
-            //         }
+            //function to create the surrounding roads of the castle
+            function createOuterRoad(positionX, positionY, positionZ, rotationZ) {
+                var roadMaterial = new THREE.MeshLambertMaterial({
+                    map: createRepeatingTexture("assets/road.png", 15, 1)
+                });
 
-            //         knight.rotateY(-stepIncr);
-            //     }
-            // }
+                var road = createRoad(1900, 40, roadMaterial);
+                road.rotation.x = Math.PI * 180;
+                road.rotation.y = Math.PI * 90;
+                road.rotation.z = rotationZ;
+                road.position.x = positionX;
+                road.position.y = positionY;
+                road.position.z = positionZ;
+
+                return road;
+            }
+
+            //function to create the inner roads of the castle
+            function createInnerRoad() {
+                var roadMaterial = new THREE.MeshLambertMaterial({
+                    map: createRepeatingTexture("assets/road.png", 15, 1)
+                });
+
+                var road = createRoad(1900, 55, roadMaterial);
+                road.rotation.x = Math.PI * 180;
+                road.rotation.y = Math.PI * 90;
+                road.rotation.z = 1.3;
+                road.position.z = 1;
+
+                return road;
+            }
+
+            function createCastle() {
+                var castle = new THREE.Object3D();
+
+                var wallWidth = 210;
+                var wallDepth = 13;
+
+                // FUNCAO PARA GERAR A FORMA QUE TEM O CASTELO DE GUIMARAES
+                function createWall(wallWidth, wallDepth, withoutTower) {
+
+                    var wallHeight = 55;
+                    var wallTextureName = "assets/wallnet.jpg";
+                    var floorTextureName = "assets/floor.jpg";
+                    var wallGeometry = new THREE.BoxGeometry(wallWidth, wallHeight, wallDepth);
+                    var wallMaterial = new THREE.MeshLambertMaterial({
+                        map: createRepeatingTexture(wallTextureName, 10, 5)
+                    });
+                    var floorMaterial = new THREE.MeshLambertMaterial({
+                        map: createRepeatingTexture(floorTextureName, 4, 0.6)
+                    });
+
+
+                    var wall = new THREE.Mesh(wallGeometry, new THREE.MeshFaceMaterial([wallMaterial,
+                        wallMaterial, floorMaterial, wallMaterial, wallMaterial, wallMaterial
+                    ]));
+                    wall.castShadow = true;
+                    wall.receiveShadow = true;
+
+                    wall.position.y = wallHeight / 2;
+
+                    wall.height = wallHeight; // store height value
+
+                    return wall;
+                }
+
+                var leftWall = createWall(wallWidth, wallDepth);
+                var rightWall = createWall(wallWidth, wallDepth);
+                var frontWallLeftPart = createWall((wallWidth) / 2, wallDepth);
+                // var frontWallLeftPart = createWall((wallWidth - gateSize) / 2, wallDepth);
+                var frontWallRightPart = createWall((wallWidth) / 2, wallDepth);
+                // var frontWallRightPart = createWall((wallWidth - gateSize) / 2, wallDepth);
+                var backTurnedWall = createWall(wallWidth / 2, wallDepth);
+                var backWall = createWall(wallWidth, wallDepth);
+
+                //FRONT WALLS
+                frontWallLeftPart.position.z = wallWidth / 2;
+                frontWallLeftPart.position.x = -(wallWidth) / 2 / 2 - 16;
+                // frontWallLeftPart.position.x = -(wallWidth - gateSize) / 2 / 2 - 16;
+                castle.add(frontWallLeftPart);
+
+                frontWallRightPart.position.z = wallWidth / 2;
+                frontWallRightPart.position.x = (wallWidth) / 2 / 2 + 16;
+                // frontWallRightPart.position.x = (wallWidth - gateSize) / 2 / 2 + 16;
+                castle.add(frontWallRightPart);
+
+                // LEFT TURNED WALL
+                leftWall.rotation.y = -0.3 * Math.PI;
+                leftWall.position.x = -wallWidth;
+                castle.add(leftWall);
+
+                // BACK TURNED WALL
+                backTurnedWall.rotation.y = 0.15 * Math.PI;
+                backTurnedWall.position.x = -wallWidth;
+                backTurnedWall.position.z = -wallWidth + 70;
+                castle.add(backTurnedWall);
+
+                // BACK WALL WITH 3 TOWERS
+                backWall.rotation.y = Math.PI * -0.05;
+                backWall.position.x = (wallWidth) * -0.1;
+                backWall.position.z = -wallWidth + 75;
+                castle.add(backWall);
+
+                // RIGHT WALL
+                rightWall.rotation.y = 0.5 * Math.PI;
+                rightWall.position.x = (wallWidth / 2) - 5;
+                castle.add(rightWall);
+
+                // FUNCAO PARA GERAR AS TORRINHAS DE FORA
+                // FUNCAO PARA GERAR A TORRE DE DENTRO
+                // FUNCAO PARA GERAR A PONTE
+                // FUNCAO PARA GERAR A BANDEIRA E METE-LA EM CIMA DA TORRE
+
+                return castle;
+            }
+
 
             function addLight(scene) {
                 var hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.7);
@@ -80,7 +189,7 @@
 
                 var dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
                 dirLight.castShadow = true;
-                dirLight.position.set(265, 150, -265);
+                dirLight.position.set(265, 150, 265);
 
                 dirLight.shadowMapWidth = 8192;
                 dirLight.shadowMapHeight = 8192;
@@ -98,25 +207,9 @@
                 scene.add(dirLight);
             }
 
-            // SHOW FPS FUNCTION
-            // function initStats() {
-            //     var stats = new Stats();
-
-            //     stats.setMode(0); // 0: fps, 1: ms
-
-            //     // Align top-left
-            //     stats.domElement.style.position = 'absolute';
-            //     stats.domElement.style.left = '0px';
-            //     stats.domElement.style.top = '0px';
-
-            //     $("#Stats-output").append(stats.domElement);
-
-            //     return stats;
-            // }
-
             var scene = new THREE.Scene();
 
-            scene.fog = new THREE.Fog(0xcccccc, 400, 900);
+            scene.fog = new THREE.Fog(0xcccccc, 1000, 1000);
 
             var renderer = new THREE.WebGLRenderer({
                 antialias: true
@@ -124,19 +217,24 @@
 
             renderer.setClearColor(0x9fd2f1, 1.0);
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMapEnabled = true;
+            renderer
+                .shadowMapEnabled = true;
 
             var ground = createGround();
 
             scene.add(ground);
 
-            // // add castle
+            // add castle
+            var castle = createCastle();
+            castle.rotation.x = 0.5 * Math.PI;
+            castle.rotation.y = -0.25;
+            castle.position.y = 50;
+            castle.position.x = 12;
+            ground.add(castle);
 
-            // var castle = createCastle();
-
-            // castle.rotation.x = 0.5 * Math.PI;
-
-            // ground.add(castle);
+            //add the outer roads
+            ground.add(createOuterRoad(0, 0.2, 1, 1.325));
+            ground.add(createOuterRoad(0, -160, 1.1, 2.90));
 
             addLight(scene);
 
@@ -144,119 +242,34 @@
             $("#WebGL-output").append(renderer.domElement);
 
             var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.x = -70;
+            camera
+                .position.x = -80;
             camera.position.y = 80;
-            camera.position.z = 260;
+            camera.position.z = 300;
             camera.lookAt(scene.position);
 
             // add ability to rotate/move/zoom camera
             var cameraControls = new THREE.TrackballControls(camera, renderer.domElement);
-            cameraControls.rotateSpeed = 1.0;
+            cameraControls
+                .rotateSpeed = 1.0;
             cameraControls.zoomSpeed = 1.0;
             cameraControls.panSpeed = 1.0;
-            cameraControls.noZoom = false;
+            cameraControls
+                .noZoom = false;
             cameraControls.noPan = false;
             cameraControls.staticMoving = true;
-            cameraControls.dynamicDampingFactor = 0.3;
-
-            // var gui = new dat.GUI();
-            // gui.add(new function () {
-            //     this.camera1 = function () {
-            //         cameraControls.reset();
-
-            //         camera.position.x = -70;
-            //         camera.position.y = 80;
-            //         camera.position.z = 260;
-
-            //         cameraControls.target = scene.position.clone();
-            //     }
-            // }, 'camera1');
-            // gui.add(new function () {
-            //     this.camera2 = function () {
-            //         cameraControls.reset();
-
-            //         camera.position.x = -90;
-            //         camera.position.y = 80;
-            //         camera.position.z = -50;
-
-            //         cameraControls.target = castle.getObjectByName("gateBuilding").position.clone();
-            //     }
-            // }, 'camera2');
-            // gui.add(new function () {
-            //     this.camera3 = function () {
-            //         cameraControls.reset();
-
-            //         camera.position.x = 120;
-            //         camera.position.y = 210;
-            //         camera.position.z = -240;
-
-            //         cameraControls.target = castle.position.clone();
-            //     }
-            // }, 'camera3');
-
-            // var stats = initStats();
+            cameraControls
+                .dynamicDampingFactor = 0.3;
 
             render();
 
             function render() {
-                //stats.update();
-
                 cameraControls.update();
 
                 var goingThroughGates = false;
 
-                // knights.forEach(function (knight) {
-                //     moveKnight(knight, 0.002);
-
-                //     if (knight.patrolStatus == "starting") {
-                //         if (castle.castleSize / 2 - 5 < Math.abs(knight.position.y)) {
-                //             goingThroughGates = true;
-                //         }
-                //         if (castle.castleSize / 2 + 50 < Math.abs(knight.position.y)) {
-                //             knight.patrolStatus = "patrol";
-
-                //             knight.rotateY(-0.5 * Math.PI);
-                //         }
-                //     }
-                // });
-
-                // var gate = castle.getObjectByName("gate", true);
-                // gate.visible = !goingThroughGates;
-
                 requestAnimationFrame(render);
                 renderer.render(scene, camera);
-            }
-
-
-
-            // fill UV coordinates (works only for planar surface), code from http://stackoverflow.com/questions/20774648/three-js-generate-uv-coordinate
-            function assignUvs(geometry) {
-                geometry.computeBoundingBox();
-
-                var max = geometry.boundingBox.max;
-                var min = geometry.boundingBox.min;
-
-                var offset = new THREE.Vector2(0 - min.x, 0 - min.y);
-                var range = new THREE.Vector2(max.x - min.x, max.y - min.y);
-
-                geometry.faceVertexUvs[0] = [];
-                var faces = geometry.faces;
-
-                var i;
-                for (i = 0; i < geometry.faces.length; i++) {
-
-                    var v1 = geometry.vertices[faces[i].a];
-                    var v2 = geometry.vertices[faces[i].b];
-                    var v3 = geometry.vertices[faces[i].c];
-
-                    geometry.faceVertexUvs[0].push([
-                        new THREE.Vector2((v1.x + offset.x) / range.x, (v1.y + offset.y) / range.y),
-                        new THREE.Vector2((v2.x + offset.x) / range.x, (v2.y + offset.y) / range.y),
-                        new THREE.Vector2((v3.x + offset.x) / range.x, (v3.y + offset.y) / range.y)
-                    ]);
-                }
-
-                geometry.uvsNeedUpdate = true;
             }
         });
     </script>

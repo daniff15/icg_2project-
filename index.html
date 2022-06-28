@@ -66,12 +66,12 @@
             }
 
             //function to create the surrounding roads of the castle
-            function createOuterRoad(positionX, positionY, positionZ, rotationZ) {
+            function createOuterRoad(positionX, positionY, positionZ, rotationZ, size) {
                 var roadMaterial = new THREE.MeshLambertMaterial({
                     map: createRepeatingTexture("assets/road.png", 15, 1)
                 });
 
-                var road = createRoad(1900, 40, roadMaterial);
+                var road = createRoad(size, 40, roadMaterial);
                 road.rotation.x = Math.PI * 180;
                 road.rotation.y = Math.PI * 90;
                 road.rotation.z = rotationZ;
@@ -104,7 +104,7 @@
                 var wallDepth = 13;
 
                 // FUNCAO PARA GERAR A FORMA QUE TEM O CASTELO DE GUIMARAES
-                function createWall(wallWidth, wallDepth, withoutTower) {
+                function createWall(wallWidth, wallDepth, back) {
 
                     var wallHeight = 55;
                     var wallGeometry = new THREE.BoxGeometry(wallWidth, wallHeight, wallDepth);
@@ -125,6 +125,38 @@
                     wall.position.y = wallHeight / 2;
 
                     wall.height = wallHeight; // store height value
+                    var wallTextureName = "assets/wall.jpg";
+                    var floorTextureName = "assets/floor.jpg";
+
+                    var battlementTexture = createRepeatingTexture("assets/wallnet.jpg", 1, 1);
+                    battlementTexture.offset.x = 0.1;
+
+                    var battlementMaterial = new THREE.MeshLambertMaterial({
+                        map: battlementTexture
+                    });
+
+                    // Put the blocks on top of the walls
+                    var battlementWidth = 6;
+                    var battlementHeight = 11;
+
+                    var battlementGeometry = new THREE.BoxGeometry(battlementWidth, battlementHeight,
+                        battlementWidth);
+
+                    for (var x = 5 + -(wallWidth / 2) + battlementWidth / 2; x < wallWidth / 2 - 5; x +=
+                        battlementWidth * 2) {
+                        var battlement = new THREE.Mesh(battlementGeometry, battlementMaterial);
+                        battlement.castShadow = true;
+                        battlement.receiveShadow = true;
+
+                        battlement.position.set(x, wallHeight / 2 + battlementWidth / 2, wallDepth / 2 -
+                            battlementWidth / 2);
+
+                        if (back) {
+                            battlement.position.set(x, wallHeight / 2 + battlementWidth / 2, -(wallDepth / 2 -
+                                battlementWidth / 2));
+                        }
+                        wall.add(battlement);
+                    }
 
                     return wall;
                 }
@@ -181,7 +213,6 @@
 
                     for (var x = 1 + -(35 / 2) + 7.5 / 2; x < 130 / 2 - 5; x +=
                         7.5 * 2) {
-                        console.log("ENTREI")
                         var block = new THREE.Mesh(new THREE.BoxGeometry(7.5, 10,
                             5), blockMaterial);
                         block.castShadow = true;
@@ -223,26 +254,53 @@
                     return gateBuilding;
                 }
 
+                // Funcao para gerar circle towers 
+                function createCircleTower(towerHeight, radius) {
+                    var towerWallMaterial = new THREE.MeshLambertMaterial({
+                        map: createRepeatingTexture("assets/wallnet.jpg", 10, 5)
+                    });
+
+                    var tower = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, towerHeight, 20),
+                        towerWallMaterial);
+                    tower.castShadow = true;
+                    tower.receiveShadow = true;
+
+                    tower.position.y = 5;
+
+                    return tower;
+                }
+
+                // Funcao para gerar rect towers 
+                function createRectTower(width, heigth, depth) {
+                    var towerWallMaterial = new THREE.MeshLambertMaterial({
+                        map: createRepeatingTexture("assets/wallnet.jpg", 5, 10)
+                    });
+
+                    var tower = new THREE.Mesh(new THREE.BoxGeometry(width, heigth, depth),
+                        towerWallMaterial);
+                    tower.castShadow = true;
+                    tower.receiveShadow = true;
+
+                    tower.position.y = 5;
+
+                    return tower;
+                }
 
                 // --------------------------------- ESTRUTURA DO CASTELO ---------------------------------
-                var leftWall = createWall(wallWidth, wallDepth);
+                var leftWall = createWall(wallWidth + 35, wallDepth);
                 var rightWall = createWall(wallWidth, wallDepth);
                 var frontWallLeftPart = createWall((wallWidth) / 2, wallDepth);
-                // var frontWallLeftPart = createWall((wallWidth - gateSize) / 2, wallDepth);
-                var frontWallRightPart = createWall((wallWidth) / 2, wallDepth);
-                // var frontWallRightPart = createWall((wallWidth - gateSize) / 2, wallDepth);
-                var backTurnedWall = createWall(wallWidth / 2, wallDepth);
-                var backWall = createWall(wallWidth, wallDepth);
+                var frontWallRightPart = createWall((wallWidth) / 3 + 2.5, wallDepth);
+                var backTurnedWall = createWall(wallWidth / 2 + 30, wallDepth, true);
+                var backWall = createWall(wallWidth + 50, wallDepth, true);
 
                 //FRONT WALLS
                 frontWallLeftPart.position.z = wallWidth / 2;
-                frontWallLeftPart.position.x = -(wallWidth) / 2 / 2 - 16;
-                // frontWallLeftPart.position.x = -(wallWidth - gateSize) / 2 / 2 - 16;
+                frontWallLeftPart.position.x = -(wallWidth) / 2 / 2 - 30;
                 castle.add(frontWallLeftPart);
 
                 frontWallRightPart.position.z = wallWidth / 2;
-                frontWallRightPart.position.x = (wallWidth) / 2 / 2 + 16;
-                // frontWallRightPart.position.x = (wallWidth - gateSize) / 2 / 2 + 16;
+                frontWallRightPart.position.x = (wallWidth) / 6 + 35;
                 castle.add(frontWallRightPart);
 
                 // LEFT TURNED WALL
@@ -257,7 +315,7 @@
                 castle.add(backTurnedWall);
 
                 // BACK WALL WITH 3 TOWERS
-                backWall.rotation.y = Math.PI * -0.05;
+                backWall.rotation.y = Math.PI * -0.1;
                 backWall.position.x = (wallWidth) * -0.1;
                 backWall.position.z = -wallWidth + 75;
                 castle.add(backWall);
@@ -267,18 +325,37 @@
                 rightWall.position.x = (wallWidth / 2) - 5;
                 castle.add(rightWall);
 
+                //Create gate
                 var gate = createGate(70);
                 gate.name = "gateBuilding";
-
+                gate.position.z = wallWidth / 2;
                 castle.add(gate);
 
-                gate.position.z = wallWidth / 2;
+                //Create circle towers
+                var rightCircleFrontTower = createCircleTower(85, 18);
+                rightCircleFrontTower.position.set(100, 40, 100);
+                castle.add(rightCircleFrontTower)
+
+                var leftCircleFrontTower = createCircleTower(85, 18);
+                leftCircleFrontTower.position.set(-135, 40, 100);
+                castle.add(leftCircleFrontTower)
+
+                var rightCircleBackTower = createCircleTower(85, 20);
+                rightCircleBackTower.position.set(100, 40, -100);
+                castle.add(rightCircleBackTower)
+
+                var backCircleTower = createCircleTower(85, 20);
+                backCircleTower.position.set(-140, 40, -170);
+                castle.add(backCircleTower)
+
+                //Create Rect Towers
+                var leftCornerTower = createRectTower(25, 100, 30);
+                leftCornerTower.position.set(-275, 40, -100);
+                castle.add(leftCornerTower)
+
 
                 // --------------------------------- FIM ESTRUTURA DO CASTELO ---------------------------------
 
-
-
-                // FUNCAO PARA GERAR AS TORRINHAS DE FORA
                 // FUNCAO PARA GERAR A TORRE DE DENTRO
                 // FUNCAO PARA GERAR A PONTE
                 // FUNCAO PARA GERAR A BANDEIRA E METE-LA EM CIMA DA TORRE
@@ -340,8 +417,8 @@
             ground.add(castle);
 
             //add the outer roads
-            ground.add(createOuterRoad(0, 0.2, 1, 1.325));
-            ground.add(createOuterRoad(0, -160, 1.1, 2.90));
+            ground.add(createOuterRoad(0, 0.2, 1, 1.325, 1900));
+            ground.add(createOuterRoad(0, -160, 1.1, 2.90, 1900));
 
             addLight(scene);
 

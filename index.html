@@ -235,6 +235,24 @@
                     barrier.add(leftBlock);
                     barrier.add(rightBlock);
 
+                    var loader = new THREE.JSONLoader();
+                    loader.load("assets/archer_version_3.json",
+                        function (geom, mat) {
+                            var archer = new THREE.Mesh(geom, mat[0]);
+
+                            archer.castShadow = true;
+                            for (var x = 1 + -(35 / 2) + 7.5 / 2; x < 60 / 2 - 5; x +=
+                                7.5 * 2) {
+                                var wallArcher = archer.clone();
+
+                                wallArcher.position.y = 13;
+                                wallArcher.position.x = -5 + x;
+                                wallArcher.rotation.y = Math.PI;
+
+                                barrier.add(wallArcher);
+                            }
+                        });
+
                     // extract space for the gate from the building
                     var gateMesh = new THREE.Mesh(new THREE.BoxGeometry(gateWidth, gateHeight,
                         35), new THREE.MeshLambertMaterial());
@@ -270,29 +288,13 @@
                     return tower;
                 }
 
-                // Funcao para gerar rect towers 
-                function createRectTower(width, heigth, depth) {
-                    var towerWallMaterial = new THREE.MeshLambertMaterial({
-                        map: createRepeatingTexture("assets/wallnet.jpg", 5, 10)
-                    });
-
-                    var tower = new THREE.Mesh(new THREE.BoxGeometry(width, heigth, depth),
-                        towerWallMaterial);
-                    tower.castShadow = true;
-                    tower.receiveShadow = true;
-
-                    tower.position.y = 5;
-
-                    return tower;
-                }
-
                 // --------------------------------- ESTRUTURA DO CASTELO ---------------------------------
-                var leftWall = createWall(wallWidth + 35, wallDepth);
+                var leftWall = createWall(wallWidth, wallDepth);
                 var rightWall = createWall(wallWidth, wallDepth);
                 var frontWallLeftPart = createWall((wallWidth) / 2, wallDepth);
-                var frontWallRightPart = createWall((wallWidth) / 3 + 2.5, wallDepth);
-                var backTurnedWall = createWall(wallWidth / 2 + 30, wallDepth, true);
-                var backWall = createWall(wallWidth + 50, wallDepth, true);
+                var frontWallRightPart = createWall((wallWidth) / 2, wallDepth);
+                var backTurnedWall = createWall(wallWidth + 5, wallDepth, true);
+                var backWall = createWall(wallWidth + 5, wallDepth, true);
 
                 //FRONT WALLS
                 frontWallLeftPart.position.z = wallWidth / 2;
@@ -300,40 +302,41 @@
                 castle.add(frontWallLeftPart);
 
                 frontWallRightPart.position.z = wallWidth / 2;
-                frontWallRightPart.position.x = (wallWidth) / 6 + 35;
+                frontWallRightPart.position.x = (wallWidth) / 2 / 2 + 30;
                 castle.add(frontWallRightPart);
 
                 // LEFT TURNED WALL
-                leftWall.rotation.y = -0.3 * Math.PI;
-                leftWall.position.x = -wallWidth;
+                leftWall.rotation.y = -0.5 * Math.PI;
+                leftWall.position.x = -135;
                 castle.add(leftWall);
 
                 // BACK TURNED WALL
-                backTurnedWall.rotation.y = 0.15 * Math.PI;
-                backTurnedWall.position.x = -wallWidth;
-                backTurnedWall.position.z = -wallWidth + 70;
+                backTurnedWall.rotation.y = 0.3 * Math.PI;
+                backTurnedWall.position.x = -75;
+                backTurnedWall.position.z = -200;
                 castle.add(backTurnedWall);
 
                 // BACK WALL WITH 3 TOWERS
-                backWall.rotation.y = Math.PI * -0.1;
-                backWall.position.x = (wallWidth) * -0.1;
-                backWall.position.z = -wallWidth + 75;
+                backWall.rotation.y = Math.PI * -0.3;
+                backWall.position.x = 75;
+                backWall.position.z = -200;
                 castle.add(backWall);
 
                 // RIGHT WALL
                 rightWall.rotation.y = 0.5 * Math.PI;
-                rightWall.position.x = (wallWidth / 2) - 5;
+                rightWall.position.x = 135;
                 castle.add(rightWall);
 
                 //Create gate
                 var gate = createGate(70);
                 gate.name = "gateBuilding";
                 gate.position.z = wallWidth / 2;
+                console.log(gate.position)
                 castle.add(gate);
 
                 //Create circle towers
                 var rightCircleFrontTower = createCircleTower(85, 18);
-                rightCircleFrontTower.position.set(100, 40, 100);
+                rightCircleFrontTower.position.set(135, 40, 100);
                 castle.add(rightCircleFrontTower)
 
                 var leftCircleFrontTower = createCircleTower(85, 18);
@@ -341,17 +344,17 @@
                 castle.add(leftCircleFrontTower)
 
                 var rightCircleBackTower = createCircleTower(85, 20);
-                rightCircleBackTower.position.set(100, 40, -100);
+                rightCircleBackTower.position.set(135, 40, -100);
                 castle.add(rightCircleBackTower)
 
                 var backCircleTower = createCircleTower(85, 20);
-                backCircleTower.position.set(-140, 40, -170);
+                backCircleTower.position.set(0, 40, -300);
                 castle.add(backCircleTower)
 
                 //Create Rect Towers
-                var leftCornerTower = createRectTower(25, 100, 30);
-                leftCornerTower.position.set(-275, 40, -100);
-                castle.add(leftCornerTower)
+                var backCircleTower = createCircleTower(85, 20);
+                backCircleTower.position.set(-135, 40, -100);
+                castle.add(backCircleTower)
 
 
                 // --------------------------------- FIM ESTRUTURA DO CASTELO ---------------------------------
@@ -417,8 +420,8 @@
             ground.add(castle);
 
             //add the outer roads
-            ground.add(createOuterRoad(0, 0.2, 1, 1.325, 1900));
-            ground.add(createOuterRoad(0, -160, 1.1, 2.90, 1900));
+            // ground.add(createOuterRoad(0, 0.2, 1, 1.325, 1900));
+            // ground.add(createOuterRoad(0, -160, 1.1, 2.90, 1900));
 
             addLight(scene);
 
@@ -426,11 +429,14 @@
             $("#WebGL-output").append(renderer.domElement);
 
             var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera
-                .position.x = -80;
-            camera.position.y = 80;
-            camera.position.z = 300;
+            camera.position.x = -80;
+            camera.position.y = 250;
+            camera.position.z = 400;
             camera.lookAt(scene.position);
+
+            // camera.position.x = -80;
+            // camera.position.y = 80;
+            // camera.position.z = 300;
 
             // add ability to rotate/move/zoom camera
             var cameraControls = new THREE.TrackballControls(camera, renderer.domElement);

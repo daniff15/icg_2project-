@@ -37,6 +37,7 @@
                 return texture;
             }
 
+            //Self explained
             function createGround() {
                 var size = 2000;
 
@@ -106,14 +107,12 @@
                 function createWall(wallWidth, wallDepth, withoutTower) {
 
                     var wallHeight = 55;
-                    var wallTextureName = "assets/wallnet.jpg";
-                    var floorTextureName = "assets/floor.jpg";
                     var wallGeometry = new THREE.BoxGeometry(wallWidth, wallHeight, wallDepth);
                     var wallMaterial = new THREE.MeshLambertMaterial({
-                        map: createRepeatingTexture(wallTextureName, 10, 5)
+                        map: createRepeatingTexture("assets/wallnet.jpg", 10, 5)
                     });
                     var floorMaterial = new THREE.MeshLambertMaterial({
-                        map: createRepeatingTexture(floorTextureName, 4, 0.6)
+                        map: createRepeatingTexture("assets/floor.jpg", 4, 0.6)
                     });
 
 
@@ -130,6 +129,102 @@
                     return wall;
                 }
 
+                // FUNCAO PARA GERAR O PORTAO DO CASTELO
+                function createGate(size) {
+                    var gateMaterial = new THREE.MeshLambertMaterial({
+                        map: THREE.ImageUtils.loadTexture("assets/gate.png"),
+                        side: THREE.DoubleSide
+                    });
+                    var roofMaterial = new THREE.MeshLambertMaterial({
+                        map: createRepeatingTexture("assets/roof.jpg", 8, 1.5)
+                    });
+
+                    var wallMaterial = new THREE.MeshLambertMaterial({
+                        map: createRepeatingTexture("assets/wallnet.jpg", 10, 5)
+                    });
+
+                    var wallFloorMaterial = new THREE.MeshLambertMaterial({
+                        map: createRepeatingTexture("assets/wallnet.jpg", 10, 1)
+                    });
+
+                    var blockMaterial = new THREE.MeshLambertMaterial({
+                        map: createRepeatingTexture("assets/wallnet.jpg", 1, 1)
+                    });
+
+                    var floorMaterial = new THREE.MeshLambertMaterial({
+                        map: createRepeatingTexture("assets/floor.jpg", 2, 2)
+                    });
+
+                    var gateBuilding = new THREE.Mesh(new THREE.BoxGeometry(size,
+                        55, 35), wallMaterial);
+
+                    gateBuilding.position.y = 55 / 2;
+
+                    // create gate
+                    var gateWidth = 24;
+                    var gateHeight = 50;
+                    var gateGeometry = new THREE.PlaneGeometry(gateWidth, gateHeight);
+                    var gate = new THREE.Mesh(gateGeometry, gateMaterial);
+                    gate.receiveShadow = true;
+                    gate.position.set(0, -2, 35 / 2);
+                    gate.name = "gate";
+
+                    // create barriers
+                    var barrier = new THREE.Mesh(new THREE.BoxGeometry(size, 6,
+                        35), new THREE.MeshFaceMaterial([wallFloorMaterial,
+                        wallFloorMaterial, floorMaterial, wallFloorMaterial, wallFloorMaterial,
+                        wallFloorMaterial
+                    ]));
+                    barrier.castShadow = true;
+                    barrier.rotation.y = Math.PI;
+                    barrier.position.y = 45 / 2 + 8;
+
+                    for (var x = 1 + -(35 / 2) + 7.5 / 2; x < 130 / 2 - 5; x +=
+                        7.5 * 2) {
+                        console.log("ENTREI")
+                        var block = new THREE.Mesh(new THREE.BoxGeometry(7.5, 10,
+                            5), blockMaterial);
+                        block.castShadow = true;
+                        block.receiveShadow = true;
+
+                        block.position.set(x - 17.5, 6 / 2 + 7.5 / 2, -10);
+                        barrier.add(block);
+                    }
+
+                    var leftBlock = new THREE.Mesh(new THREE.BoxGeometry(7.5, 10,
+                        5), blockMaterial);
+                    leftBlock.position.set(30, 6 / 2 + 7.5 / 2, 6 / 2 + 7.5 / 2 - 4)
+                    leftBlock.rotation.y = Math.PI * 0.5;
+
+                    var rightBlock = new THREE.Mesh(new THREE.BoxGeometry(7.5, 10,
+                        5), blockMaterial);
+                    rightBlock.position.set(-30, 6 / 2 + 7.5 / 2, 6 / 2 + 7.5 / 2 - 4)
+                    rightBlock.rotation.y = Math.PI * -0.5;
+
+                    barrier.add(leftBlock);
+                    barrier.add(rightBlock);
+
+                    // extract space for the gate from the building
+                    var gateMesh = new THREE.Mesh(new THREE.BoxGeometry(gateWidth, gateHeight,
+                        35), new THREE.MeshLambertMaterial());
+                    gateMesh.position.y = gateHeight / 2;
+
+                    var subtractedBsp = new ThreeBSP(gateBuilding).subtract(new ThreeBSP(gateMesh));
+
+                    gateBuilding = subtractedBsp.toMesh(wallMaterial);
+                    gateBuilding.geometry.computeVertexNormals();
+                    gateBuilding.castShadow = true;
+                    gateBuilding.receiveShadow = true;
+
+                    gateBuilding.add(gate);
+
+                    gateBuilding.add(barrier);
+
+                    return gateBuilding;
+                }
+
+
+                // --------------------------------- ESTRUTURA DO CASTELO ---------------------------------
                 var leftWall = createWall(wallWidth, wallDepth);
                 var rightWall = createWall(wallWidth, wallDepth);
                 var frontWallLeftPart = createWall((wallWidth) / 2, wallDepth);
@@ -171,6 +266,17 @@
                 rightWall.rotation.y = 0.5 * Math.PI;
                 rightWall.position.x = (wallWidth / 2) - 5;
                 castle.add(rightWall);
+
+                var gate = createGate(70);
+                gate.name = "gateBuilding";
+
+                castle.add(gate);
+
+                gate.position.z = wallWidth / 2;
+
+                // --------------------------------- FIM ESTRUTURA DO CASTELO ---------------------------------
+
+
 
                 // FUNCAO PARA GERAR AS TORRINHAS DE FORA
                 // FUNCAO PARA GERAR A TORRE DE DENTRO
@@ -228,7 +334,8 @@
             var castle = createCastle();
             castle.rotation.x = 0.5 * Math.PI;
             castle.rotation.y = -0.25;
-            castle.position.y = 50;
+            castle
+                .position.y = 50;
             castle.position.x = 12;
             ground.add(castle);
 

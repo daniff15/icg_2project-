@@ -639,6 +639,73 @@
             building.position.z = -100;
             castle.add(building);
             // --------------------------------- FIM ESTRUTURA DO CASTELO ---------------------------------
+            var knights = [];
+
+            var loader = new THREE.JSONLoader();
+
+            loader.load("assets/knight.json",
+                function (geom, mat) {
+                    var scale = 1.2;
+
+                    knight = new THREE.Mesh(geom, mat[0]);
+
+                    knight.castShadow = true;
+
+                    knight.rotation.x = 0.5 * Math.PI;
+                    knight.position.z = 70;
+                    knight.position.y = 12;
+                    knight.position.x = -35;
+
+                    knight.scale.set(scale, scale, scale);
+
+                    var j;
+                    for (j = 0; j < 6; j++) {
+                        var patrolKnight = knight.clone();
+
+                        patrolKnight.step = 0;
+                        patrolKnight.patrolRadius = castle.castleSize / 2 + 110;
+
+                        patrolKnight.rotateY(Math.PI * 0.5);
+                        patrolKnight.rotateZ(Math.PI * -0.5);
+
+                        patrolKnight.position.z -= j * 20
+                        console.log(patrolKnight.position)
+
+                        castle.add(patrolKnight);
+                    }
+                });
+
+            loader.load("assets/knight.json",
+                function (geom, mat) {
+                    var scale = 1.2;
+
+                    knight = new THREE.Mesh(geom, mat[0]);
+
+                    knight.castShadow = true;
+
+                    knight.position.z = 70;
+                    knight.position.y = 12;
+                    knight.position.x = 35;
+
+                    knight.scale.set(scale, scale, scale);
+
+                    var j;
+                    for (j = 0; j < 6; j++) {
+                        var patrolKnight = knight.clone();
+
+                        patrolKnight.step = 0;
+                        patrolKnight.patrolRadius = castle.castleSize / 2 + 110;
+
+                        patrolKnight.rotateY(Math.PI * 0.5);
+                        patrolKnight.rotateZ(Math.PI * -1);
+                        patrolKnight.rotateX(Math.PI * -1);
+
+                        patrolKnight.position.z -= j * 20
+                        console.log(patrolKnight.position)
+
+                        castle.add(patrolKnight);
+                    }
+                });
 
             return castle;
         }
@@ -698,7 +765,8 @@
 
         renderer.setClearColor(0x9fd2f1, 1.0);
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMapEnabled = true;
+        renderer
+            .shadowMapEnabled = true;
 
         var ground = createGround();
 
@@ -758,7 +826,8 @@
         document.body.appendChild(renderer.domElement);
 
         var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.x = -80;
+        camera
+            .position.x = -80;
         camera.position.y = 450;
         camera.position.z = 500;
         camera.lookAt(scene.position);
@@ -795,10 +864,12 @@
 
         var cameraControls = new THREE.FirstPersonControls(camera);
         cameraControls.lookSpeed = 0.25;
-        cameraControls.movementSpeed = 50;
+        cameraControls
+            .movementSpeed = 50;
         cameraControls.noFly = true;
         cameraControls.lookVertical = true;
-        cameraControls.constrainVertical = true;
+        cameraControls
+            .constrainVertical = true;
         cameraControls.lon = -150;
         cameraControls.lat = 120;
 
@@ -837,29 +908,8 @@
             });
 
         var flash = new THREE.PointLight(0x062d89, 30, 500, 1.7);
-        flash.position.set(200, 500, 100)
-        scene.add(flash)
-
-        var rainGeo = new THREE.Geometry();
-
-        for (let index = 0; index < 15000; index++) {
-            rainDrop = new THREE.Vector3(
-                Math.random() * 400 - 200,
-                Math.random() * 500 - 250,
-                Math.random() * 400 - 200,
-            );
-            rainGeo.vertices.push(rainDrop);
-        }
-
-        var rainMaterial = new THREE.MeshLambertMaterial({
-            color: 0xaaaaaa,
-            size: 0.2,
-            transparent: true
-        });
-
-        var rain = new THREE.Mesh(rainGeo, rainMaterial);
-        console.log(rain.position)
-        scene.add(rain)
+        flash.position.set(200, 500, 100);
+        scene.add(flash);
 
         render();
 
@@ -871,7 +921,7 @@
             var goingThroughGates = false;
 
             knights.forEach(function (knight) {
-                moveKnight(knight, 0.1);
+                moveKnight(knight, 0.005);
 
                 if (knight.patrolStatus == "starting") {
                     //passar pela porta quando add knight
@@ -897,17 +947,6 @@
                 flash.power = 50 + Math.random() * 500;
             }
 
-            rainGeo.vertices.forEach(p => {
-                p.velocity -= 0.1 + Math.random() * 0.1;
-                p.y += p.velocity;
-                if (p.y < -200) {
-                    p.y = 200;
-                    p.velocity = 0;
-                }
-            });
-            rainGeo.verticesNeedUpdate = true;
-            rain.rotation.y += 0.002;
-
             var gate = castle.getObjectByName("gate", true);
             gate.visible = !goingThroughGates;
 
@@ -917,6 +956,33 @@
     });
 </script>
 
-<body></body>
+<body>
+    <div id="controlos"
+        style="background-color: white; border: 2px solid black; display:block; width: 250px; height: 150px; position: absolute; top: 0; left: 0; padding: 5px;">
+        <div style="display: block; height: 150px; margin: 0; font-size: medium;">
+            <div id=" controls">
+                <p>
+                    Mover Câmara - WASD (em conjunto com o rato)
+                </p>
+                <p>
+                    Parar de Mover a Câmara - Q
+                </p>
+                <p>
+                    Subir a Câmara - R
+                </p>
+                <p>
+                    Descer a Câmara - F
+                </p>
+            </div>
+            <div id="note">
+                <p>Nota:</p>
+                <h6 style="margin-top: -5%;">Para adicionar um cavaleiro, pare a câmara e clique no botão no canto
+                    superior direito</h6>
+            </div>
+
+        </div>
+
+    </div>
+</body>
 
 </html>

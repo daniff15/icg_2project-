@@ -8,7 +8,7 @@
     <script src="libs/jquery-1.9.0.js"></script>
     <script src="libs/stats.js"></script>
     <script src="libs/dat.gui.js"></script>
-    <script src="libs/OrbitControls.js"></script>
+    <script src="libs/FirstPersonControls.js"></script>
     <script src="libs/ThreeCSG.js"></script>
     <style>
         body {
@@ -765,39 +765,6 @@
 
         var gui = new dat.GUI();
         gui.add(new function () {
-            this.camera1 = function () {
-                cameraControls.reset();
-
-                camera.position.x = -70;
-                camera.position.y = 80;
-                camera.position.z = 260;
-
-                cameraControls.target = scene.position.clone();
-            }
-        }, 'camera1');
-        gui.add(new function () {
-            this.camera2 = function () {
-                cameraControls.reset();
-
-                camera.position.x = -90;
-                camera.position.y = 80;
-                camera.position.z = -50;
-
-                cameraControls.target = castle.getObjectByName("gateBuilding").position.clone();
-            }
-        }, 'camera2');
-        gui.add(new function () {
-            this.camera3 = function () {
-                cameraControls.reset();
-
-                camera.position.x = 120;
-                camera.position.y = 210;
-                camera.position.z = -240;
-
-                cameraControls.target = castle.position.clone();
-            }
-        }, 'camera3');
-        gui.add(new function () {
             this.addKnight = function () {
                 var patrolKnight = knight.clone();
 
@@ -821,11 +788,85 @@
 
         // add ability to rotate/move/zoom camera
 
-        const cameraControls = new THREE.OrbitControls(camera);
+        //const cameraControls = new THREE.OrbitControls(camera);
+        camera.position.x = -50;
+        camera.position.y = 150;
+        camera.position.z = 350;
+
+        var cameraControls = new THREE.FirstPersonControls(camera);
+        cameraControls.lookSpeed = 0.25;
+        cameraControls.movementSpeed = 50;
+        cameraControls.noFly = true;
+        cameraControls.lookVertical = true;
+        cameraControls.constrainVertical = true;
+        cameraControls.lon = -150;
+        cameraControls.lat = 120;
+
+        var clock = new THREE.Clock();
+
+
+        var smokeParticles = []
+
+        //do the clouds
+        const loaderText = new THREE.TextureLoader();
+        loaderText.load(
+            'assets/blue-smoke.png',
+            function onLoad(texture) {
+                const smokeGeo = new THREE.PlaneBufferGeometry(350, 350);
+
+                const smokeMaterial = new THREE.MeshLambertMaterial({
+                    map: texture,
+                    transparent: true
+                });
+
+                for (let p = 0, l = 100; p < l; p++) {
+                    let particle = new THREE.Mesh(smokeGeo, smokeMaterial);
+                    var max = 500;
+                    var min = -500;
+                    particle.position.set(
+                        Math.random() * (max - min + 1) + min,
+                        350,
+                        Math.random() * (max - min + 1) + min
+                    );
+
+                    particle.rotation.z = Math.random() * 360;
+                    scene.add(particle);
+                    smokeParticles.push(particle);
+                }
+
+            });
+
+        var flash = new THREE.PointLight(0x062d89, 30, 500, 1.7);
+        flash.position.set(200, 500, 100)
+        scene.add(flash)
+
+        var rainGeo = new THREE.Geometry();
+
+        for (let index = 0; index < 15000; index++) {
+            rainDrop = new THREE.Vector3(
+                Math.random() * 400 - 200,
+                Math.random() * 500 - 250,
+                Math.random() * 400 - 200,
+            );
+            rainGeo.vertices.push(rainDrop);
+        }
+
+        var rainMaterial = new THREE.MeshLambertMaterial({
+            color: 0xaaaaaa,
+            size: 0.2,
+            transparent: true
+        });
+
+        var rain = new THREE.Mesh(rainGeo, rainMaterial);
+        console.log(rain.position)
+        scene.add(rain)
+
         render();
 
         function render() {
-            cameraControls.update();
+            var delta = clock.getDelta();
+
+            cameraControls.update(delta);
 
             var goingThroughGates = false;
 
@@ -844,6 +885,28 @@
                     }
                 }
             });
+
+            [].forEach.call(smokeParticles, sp => {
+                sp.rotation.z += delta * 0.2;
+            });
+
+            if (Math.random() > 0.93 || flash.power > 100) {
+                if (flash.power < 100) {
+                    flash.position.set(Math.random() * 400, 500 + Math.random() * 200, 100)
+                }
+                flash.power = 50 + Math.random() * 500;
+            }
+
+            rainGeo.vertices.forEach(p => {
+                p.velocity -= 0.1 + Math.random() * 0.1;
+                p.y += p.velocity;
+                if (p.y < -200) {
+                    p.y = 200;
+                    p.velocity = 0;
+                }
+            });
+            rainGeo.verticesNeedUpdate = true;
+            rain.rotation.y += 0.002;
 
             var gate = castle.getObjectByName("gate", true);
             gate.visible = !goingThroughGates;

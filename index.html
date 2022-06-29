@@ -285,7 +285,104 @@
 
                     tower.position.y = 5;
 
+                    var loader = new THREE.JSONLoader();
+                    loader.load("assets/archer_version_3.json",
+                        function (geom, mat) {
+                            var archer = new THREE.Mesh(geom, mat[0]);
+
+                            archer.castShadow = true;
+                            var wallArcher = archer.clone();
+
+                            wallArcher.position.y = 55;
+                            wallArcher.position.x = 1;
+                            wallArcher.position.z = 5;
+                            wallArcher.rotation.y = Math.PI * -2;
+
+                            tower.add(wallArcher);
+                        });
+
                     return tower;
+                }
+
+
+                // Funcao para gerar o edificio principal
+                function createMain() {
+                    var buildingWallMaterial = new THREE.MeshLambertMaterial({
+                        map: createRepeatingTexture("assets/wallnet.jpg", 5, 10)
+                    });
+                    var wallMaterial = new THREE.MeshLambertMaterial({
+                        map: createRepeatingTexture("assets/wallnet.jpg", 10, 1)
+                    });
+                    var floorMaterial = new THREE.MeshLambertMaterial({
+                        map: createRepeatingTexture("assets/floor.jpg", 5, 10)
+                    });
+
+                    var buildingWidth = 70;
+                    var buildingHeight = 100;
+                    var buildingDepth = 80;
+                    var roofHeight = 36;
+
+                    var building = new THREE.Mesh(new THREE.BoxGeometry(buildingWidth, buildingHeight,
+                        buildingDepth), buildingWallMaterial);
+                    building.castShadow = true;
+                    building.receiveShadow = true;
+
+                    building.position.y = buildingHeight / 2;
+
+                    //add floor to main
+                    var barrier = new THREE.Mesh(new THREE.BoxGeometry(100, 6,
+                        100), new THREE.MeshFaceMaterial([wallMaterial,
+                        wallMaterial, floorMaterial, wallMaterial,
+                        wallMaterial,
+                        wallMaterial
+                    ]));
+                    barrier.castShadow = true;
+                    barrier.rotation.y = Math.PI;
+                    barrier.position.y = 50;
+                    building.add(barrier)
+
+                    //add protetions to barrier
+                    var protect1 = new THREE.Mesh(new THREE.BoxGeometry(100, 6,
+                        100), new THREE.MeshFaceMaterial([wallMaterial,
+                        wallMaterial, floorMaterial, wallMaterial,
+                        wallMaterial,
+                        wallMaterial
+                    ]));
+                    protect1.castShadow = true;
+                    protect1.rotation.y = Math.PI;
+                    protect1.position.y = 50;
+
+                    var protect2 = new THREE.Mesh(new THREE.BoxGeometry(100, 6,
+                        100), new THREE.MeshFaceMaterial([wallMaterial,
+                        wallMaterial, floorMaterial, wallMaterial,
+                        wallMaterial,
+                        wallMaterial
+                    ]));
+                    protect2.castShadow = true;
+                    protect2.rotation.y = Math.PI;
+                    protect2.position.y = 50;
+
+                    var protect3 = new THREE.Mesh(new THREE.BoxGeometry(100, 6,
+                        100), new THREE.MeshFaceMaterial([wallMaterial,
+                        wallMaterial, floorMaterial, wallMaterial,
+                        wallMaterial,
+                        wallMaterial
+                    ]));
+                    protect3.castShadow = true;
+                    protect3.rotation.y = Math.PI;
+                    protect3.position.y = 50;
+
+                    var protect4 = new THREE.Mesh(new THREE.BoxGeometry(100, 6,
+                        100), new THREE.MeshFaceMaterial([wallMaterial,
+                        wallMaterial, floorMaterial, wallMaterial,
+                        wallMaterial,
+                        wallMaterial
+                    ]));
+                    protect1.castShadow = true;
+                    protect1.rotation.y = Math.PI;
+                    protect1.position.y = 50;
+
+                    return building;
                 }
 
                 // --------------------------------- ESTRUTURA DO CASTELO ---------------------------------
@@ -335,11 +432,11 @@
                 castle.add(gate);
 
                 //Create circle towers
-                var rightCircleFrontTower = createCircleTower(85, 18);
+                var rightCircleFrontTower = createCircleTower(85, 20);
                 rightCircleFrontTower.position.set(135, 40, 100);
                 castle.add(rightCircleFrontTower)
 
-                var leftCircleFrontTower = createCircleTower(85, 18);
+                var leftCircleFrontTower = createCircleTower(85, 20);
                 leftCircleFrontTower.position.set(-135, 40, 100);
                 castle.add(leftCircleFrontTower)
 
@@ -356,7 +453,10 @@
                 backCircleTower.position.set(-135, 40, -100);
                 castle.add(backCircleTower)
 
-
+                //Create Main Building
+                var building = createMain();
+                building.position.z = -23;
+                castle.add(building);
                 // --------------------------------- FIM ESTRUTURA DO CASTELO ---------------------------------
 
                 // FUNCAO PARA GERAR A TORRE DE DENTRO

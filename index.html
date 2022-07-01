@@ -145,10 +145,6 @@
                 var gateBuilding = new THREE.Mesh(new THREE.BoxGeometry(size,
                     55, 35), wallMaterial);
 
-                var roofMaterial = new THREE.MeshLambertMaterial({
-                    map: createRepeatingTexture("assets/roof.jpg", 8, 1.5)
-                });
-
                 var wallMaterial = new THREE.MeshLambertMaterial({
                     map: createRepeatingTexture("assets/wallnet.jpg", 10, 5)
                 });
@@ -284,14 +280,6 @@
 
             // Funcao para gerar o edificio principal
             function createMain() {
-                function createWindow(xRadius, yRadius, material) {
-                    var ellipse = new THREE.EllipseCurve(0, 0, xRadius, yRadius, 0, Math.PI);
-                    var ellipsePath = new THREE.Path(ellipse.getPoints(50));
-
-                    var windowGeometry = new THREE.ShapeGeometry(ellipsePath.toShapes()[0]);
-
-                    return new THREE.Mesh(windowGeometry, material);
-                }
 
                 var buildingWallMaterial = new THREE.MeshLambertMaterial({
                     map: createRepeatingTexture("assets/wallnet.jpg", 5, 10)
@@ -487,31 +475,26 @@
 
                 building.add(door);
 
-                function createCubeMap() {
+                function createWindow(xRadius, yRadius, material) {
+                    var ellipse = new THREE.EllipseCurve(0, 0, xRadius, yRadius, 0, Math.PI);
+                    var ellipsePath = new THREE.Path(ellipse.getPoints(50));
 
-                    var path = "../assets/textures/cubemap/parliament/";
-                    var format = '.jpg';
-                    var urls = [
-                        path + 'posx' + format, path + 'negx' + format,
-                        path + 'posy' + format, path + 'negy' + format,
-                        path + 'posz' + format, path + 'negz' + format
-                    ];
+                    var windowGeometry = new THREE.ShapeGeometry(ellipsePath.toShapes()[0]);
 
-                    //        var textureCube = THREE.ImageUtils.loadTextureCube( urls );
-                    var textureCube = THREE.ImageUtils.loadTextureCube(urls, new THREE
-                        .CubeReflectionMapping());
-                    return textureCube;
+                    return new THREE.Mesh(windowGeometry, material);
                 }
 
-                var textureCube = createCubeMap();
-                textureCube.format = THREE.RGBFormat;
-
-                // add windows
-                var envMaterial = new THREE.MeshBasicMaterial({
-                    envMap: textureCube,
-                    side: THREE.DoubleSide
+                var cubeGeom = new THREE.CubeGeometry(30, 30, 10, 1, 1, 1);
+                mirrorCubeCamera = new THREE.CubeCamera(0.5, 5000, 1000);
+                mirrorCubeCamera.position.set(0, 45, 0)
+                scene.add(mirrorCubeCamera)
+                var mirrorCubeMaterial = new THREE.MeshBasicMaterial({
+                    envMap: mirrorCubeCamera.renderTarget
                 });
-                //        envMaterial.refractionRatio = 0.95;
+                mirrorCube = new THREE.Mesh(cubeGeom, mirrorCubeMaterial);
+                mirrorCube.position.set(0, 50, 0);
+                mirrorCubeCamera.position = mirrorCube.position;
+                scene.add(mirrorCube);
 
                 var windowXRadius = 4;
                 var windowYRadius = 11;
@@ -522,7 +505,7 @@
                 var x;
                 for (x = -buildingWidth / 2 + windowMargin; x < buildingWidth / 2 - windowMargin; x +=
                     windowMargin) {
-                    var wind = createWindow(windowXRadius, windowYRadius, envMaterial);
+                    var wind = createWindow(windowXRadius, windowYRadius, mirrorCubeMaterial);
 
                     wind.position.set(x + 5, windowY - 8, buildingDepth / 2 + 0.2);
 
@@ -533,7 +516,7 @@
                 var z;
                 for (z = -buildingDepth / 2 + windowMargin; z < buildingDepth / 2 - windowMargin; z +=
                     windowMargin) {
-                    wind = createWindow(windowXRadius, windowYRadius, envMaterial);
+                    wind = createWindow(windowXRadius, windowYRadius, mirrorCubeMaterial);
 
                     wind.rotation.y = -0.5 * Math.PI;
                     wind.position.set(-buildingWidth / 2 - 0.2, windowY, z);
@@ -544,7 +527,7 @@
                 // right side
                 for (z = -buildingDepth / 2 + windowMargin; z < buildingDepth / 2 - windowMargin; z +=
                     windowMargin) {
-                    wind = createWindow(windowXRadius, windowYRadius, envMaterial);
+                    wind = createWindow(windowXRadius, windowYRadius, mirrorCubeMaterial);
 
                     wind.rotation.y = 0.5 * Math.PI;
                     wind.position.set(buildingWidth / 2 + 0.2, windowY, z);
@@ -552,9 +535,10 @@
                     building.add(wind);
                 }
 
+
                 // a bigger window on front side upper part
 
-                wind = createWindow(8, 24, envMaterial);
+                wind = createWindow(8, 24, mirrorCubeMaterial);
 
                 wind.position.set(0, 20, buildingDepth / 2 + 0.2);
 
@@ -881,7 +865,7 @@
         loaderText.load(
             'assets/blue-smoke.png',
             function onLoad(texture) {
-                const smokeGeo = new THREE.PlaneBufferGeometry(350, 350);
+                const smokeGeo = new THREE.PlaneBufferGeometry(250, 250);
 
                 const smokeMaterial = new THREE.MeshLambertMaterial({
                     map: texture,
@@ -913,6 +897,10 @@
 
         function render() {
             var delta = clock.getDelta();
+
+            mirrorCube.visible = false;
+            mirrorCubeCamera.updateCubeMap(renderer, scene);
+            mirrorCube.visible = true;
 
             cameraControls.update(delta);
 
